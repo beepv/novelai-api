@@ -1,7 +1,7 @@
 from http.cookies import SimpleCookie
 from logging import Logger
 from os.path import abspath, dirname
-from typing import Optional
+from typing import Optional, Union
 
 from aiohttp import BasicAuth, ClientSession, ClientTimeout
 from aiohttp.typedefs import StrOrURL
@@ -44,7 +44,12 @@ class NovelAIAPI:
     #: The high-level API (abstraction on top of low-level)
     high_level: HighLevel
 
-    def __init__(self, session: Optional[ClientSession] = None, logger: Optional[Logger] = None):
+    def __init__(
+        self,
+        api_key: str,
+        session: Optional[ClientSession] = None,
+        logger: Optional[Logger] = None,
+    ):
         """
         Create a new NovelAIAPI object, which can be used to interact with the API.
         Use the low_level and high_level attributes for this purpose
@@ -52,20 +57,23 @@ class NovelAIAPI:
         Use attach_session and detach_session to switch between synchronous and asynchronous requests
         by attaching a ClientSession
 
+        :param api_key: The API key to use for requests
         :param session: The ClientSession to use for requests (None for synchronous)
         :param logger: The logger to use for the API (None for creating an empty default logger)
         """
-
+        self.api_key = api_key
         # variable passing
         if session is not None and not isinstance(session, ClientSession):
-            raise ValueError(f"Expected None or type 'ClientSession' for session, but got type '{type(session)}'")
+            raise ValueError(
+                f"Expected None or type 'ClientSession' for session, but got type '{type(session)}'"
+            )
 
         # no session = synchronous
         self.logger = Logger("NovelAI_API") if logger is None else logger
         self.session = session
 
         self.timeout = ClientTimeout(300)
-        self.headers = CIMultiDict()
+        self.headers = CIMultiDict({"Authorization": f"Bearer {self.api_key}"})
         self.cookies = SimpleCookie()
 
         self.proxy = None
@@ -81,7 +89,9 @@ class NovelAIAPI:
         """
 
         if not isinstance(session, ClientSession):
-            raise ValueError(f"Expected type 'ClientSession' for session, but got type '{type(session)}'")
+            raise ValueError(
+                f"Expected type 'ClientSession' for session, but got type '{type(session)}'"
+            )
 
         self.session = session
 

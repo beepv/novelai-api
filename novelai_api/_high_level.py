@@ -1,6 +1,16 @@
 import json
 from hashlib import sha256
-from typing import Any, AsyncIterable, Dict, Iterable, List, Optional, Tuple, Type, Union
+from typing import (
+    Any,
+    AsyncIterable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    Type,
+    Union,
+)
 
 from novelai_api.BanList import BanList
 from novelai_api.BiasGroup import BiasGroup
@@ -56,7 +66,9 @@ class HighLevel:
 
         hashed_email = sha256(email.encode()).hexdigest() if send_mail else None
         key = get_access_key(email, password)
-        return await self._parent.low_level.register(recapcha, key, hashed_email, giftkey)
+        return await self._parent.low_level.register(
+            recapcha, key, hashed_email, giftkey
+        )
 
     async def login(self, email: str, password: str) -> str:
         """
@@ -137,7 +149,9 @@ class HighLevel:
 
         return await self._parent.low_level.set_keystore(keystore.data)
 
-    async def download_user_stories(self) -> List[Dict[str, Dict[str, Union[str, int]]]]:
+    async def download_user_stories(
+        self,
+    ) -> List[Dict[str, Dict[str, Union[str, int]]]]:
         """
         Download all the objects of type 'stories' stored on the account
         """
@@ -218,10 +232,14 @@ class HighLevel:
         # this step should have been done in encrypt_user_data, but the user could have not called it
         for key in ("nonce", "compressed", "decrypted"):
             if key in object_data:
-                self._parent.logger.warning(f"Data {key} left in object '{object_type}' of id '{object_id}'")
+                self._parent.logger.warning(
+                    f"Data {key} left in object '{object_type}' of id '{object_id}'"
+                )
                 del object_data[key]
 
-        return await self._parent.low_level.upload_object(object_type, object_id, object_meta, object_data)
+        return await self._parent.low_level.upload_object(
+            object_type, object_id, object_meta, object_data
+        )
 
     async def upload_user_contents(
         self,
@@ -286,7 +304,9 @@ class HighLevel:
         if preset is None:
             raise ValueError("Uninitialized preset")
         if preset.model is not model:
-            raise ValueError(f"Preset '{preset.name}' (model {preset.model}) is not compatible with model {model}")
+            raise ValueError(
+                f"Preset '{preset.name}' (model {preset.model}) is not compatible with model {model}"
+            )
 
         preset_params = preset.to_settings()
 
@@ -325,7 +345,10 @@ class HighLevel:
         params["prefix"] = "vanilla" if prefix is None else prefix
 
         # bans and biases
-        for k, v, c in (("bad_words_ids", bad_words, BanList), ("logit_bias_exp", biases, BiasGroup)):
+        for k, v, c in (
+            ("bad_words_ids", bad_words, BanList),
+            ("logit_bias_exp", biases, BiasGroup),
+        ):
             k: str
             v: Union[Iterable[BanList], Iterable[BiasGroup], BanList, BiasGroup, None]
             c: Union[Type[BanList], Type[BiasGroup]]
@@ -336,7 +359,9 @@ class HighLevel:
 
                 for i, obj in enumerate(v):
                     if not isinstance(obj, c):
-                        raise ValueError(f"Expected type '{c}' for item #{i} of '{k}', but got '{type(obj)}'")
+                        raise ValueError(
+                            f"Expected type '{c}' for item #{i} of '{k}', but got '{type(obj)}'"
+                        )
 
                     params[k].extend(obj.get_tokenized_entries(model))
 
@@ -346,14 +371,17 @@ class HighLevel:
         # stop sequences
         if stop_sequences is not None:
             if not isinstance(stop_sequences, list):
-                raise ValueError(f"Expected type 'list' for 'stop_sequences', but got '{type(stop_sequences)}'")
+                raise ValueError(
+                    f"Expected type 'list' for 'stop_sequences', but got '{type(stop_sequences)}'"
+                )
 
             for i, obj in enumerate(stop_sequences):
                 if isinstance(obj, str):
                     stop_sequences[i] = Tokenizer.encode(model, obj)
                 elif not isinstance(obj, list):
                     raise ValueError(
-                        f"Expected type 'str' or 'list' for item #{i} of 'stop_sequences', " f"but got '{type(obj)}'"
+                        f"Expected type 'str' or 'list' for item #{i} of 'stop_sequences', "
+                        f"but got '{type(obj)}'"
                     )
 
             params["stop_sequences"] = stop_sequences
@@ -495,12 +523,16 @@ class HighLevel:
                 if ImagePreset.is_model_curated(model):
                     prompt = f"{prompt}, rating:general, best quality, very aesthetic, absurdres"
                 else:
-                    prompt = f"{prompt}, no text, best quality, very aesthetic, absurdres"
+                    prompt = (
+                        f"{prompt}, no text, best quality, very aesthetic, absurdres"
+                    )
 
         if "v4_prompt" in settings:
             settings["v4_prompt"]["caption"]["base_caption"] = prompt
 
-        async for e in self._parent.low_level.generate_image(prompt, model, action, settings):
+        async for e in self._parent.low_level.generate_image(
+            prompt, model, action, settings
+        ):
             yield e
 
     async def remove_background(self, preset: DirectorToolsPreset) -> bytes:
@@ -515,7 +547,9 @@ class HighLevel:
         :return: Processed image
         """
 
-        return await self._parent.low_level.augment_image(RequestType.BG_REMOVAL, preset)
+        return await self._parent.low_level.augment_image(
+            RequestType.BG_REMOVAL, preset
+        )
 
     async def line_art(self, preset: DirectorToolsPreset) -> bytes:
         """
